@@ -1,5 +1,8 @@
 # andmatebot-test
 
+Find the bot at @andmate
+Plays a game until checkmate achieved. Tweets ascii art of the board and the FEN
+
 update 1
 
 Added main program "checkmater.py"
