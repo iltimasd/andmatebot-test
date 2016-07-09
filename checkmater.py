@@ -19,13 +19,16 @@ def game_alive(board):
 
 
 def checkmate_gen():
+    z = 0
     while True:
         board = chess.Board()
         while game_alive(board):
             board.push(get_random_move(board))
+            z += 1
 
         if board.is_checkmate():
             if add_to_history(board):
+                print(z)
                 return board
 
 
@@ -51,23 +54,48 @@ def add_to_history(board):
 
 
 def convert_board_to_utf(board):
-    WHITE_TILE = u'\u2003'
-    BLACK_TILE = u'\u274E'
+    WHITE_TILE = u'+'
+    BLACK_TILE = u'_'
     unicode_chess_translate_table = str.maketrans(
             u"KQRBNPkqrbnp",
             u"\u2654\u2655\u2656\u2657\u2658\u2659\u265A\u265B\u265C\u265D\u265E\u265F",
             )
 
-    checkmate_utf_list = list(str(board).translate(unicode_chess_translate_table))
+    checkmate_utf_list = str(board).translate(unicode_chess_translate_table).split()
 
-    for x, y in enumerate(checkmate_utf_list):
-        if checkmate_utf_list[x] == '.':
-            if x % 2 == 0:
-                checkmate_utf_list[x] = WHITE_TILE
-            else:
-                checkmate_utf_list[x] = BLACK_TILE
+    checkmate_utf_list_with_tiles = []
 
-    return "".join(checkmate_utf_list)
+    def _get_tile_for_count(count):
+        """
+        even tile on even row: white
+        even tile on odd row: black
+        odd tile on even row: black
+        odd tile on odd row: white
+        """
+        even_tile = count % 2 == 0
+        even_row  = int(count / 8)
+        if (even_tile and even_row) or not (even_tile or even_row):
+            return WHITE_TILE
+        else:
+            return BLACK_TILE
+
+    for count, character in enumerate(checkmate_utf_list):
+        if character == '.':
+            checkmate_utf_list_with_tiles.append(_get_tile_for_count(count))
+
+        else:
+            checkmate_utf_list_with_tiles.append(character)
+
+        end_of_line = ((count + 1) % 8) == 0
+        if end_of_line:
+            checkmate_utf_list_with_tiles.append('\n')
+
+    last_char = checkmate_utf_list_with_tiles.pop()
+    if last_char != '\n':
+        checkmate_utf_list_with_tiles.append(last_char)
+
+
+    return "".join(checkmate_utf_list_with_tiles)
 
 
 if __name__ == '__main__':
@@ -79,4 +107,5 @@ if __name__ == '__main__':
     fen = checkmateObj.fen().split()[0]
     tweet_body = "{board}\n{fen}".format(board=convert_board_to_utf(checkmateObj),
                                          fen=fen)
-    api.update_status(tweet_body)
+    print(tweet_body)
+    #api.update_status(tweet_body)
