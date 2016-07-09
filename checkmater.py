@@ -1,15 +1,8 @@
 import chess
-import string
 import random
 import tweepy
-import mmap
+import pickle
 from local_settings import cKey, cKeySecret, aToken, aTokenSecret
-
-
-auth = tweepy.OAuthHandler(cKey, cKeySecret)
-auth.set_access_token(aToken, aTokenSecret)
-
-api = tweepy.API(auth)
 
 
 def get_random_move(board):
@@ -32,44 +25,58 @@ def checkmate_gen():
             board.push(get_random_move(board))
 
         if board.is_checkmate():
-            record = open('records.txt', 'a+')
-            oldgoal = str(board.fen())
-            goal = oldgoal[:oldgoal.find(' ')]
-            s = mmap.mmap(record.fileno(), 0, access=mmap.ACCESS_READ)
-            if s.find(goal) != -1:
-                checkmate_gen()
-            else:
-                record.write(goal + '\n')
-                record.close()
+            if add_to_history(board):
                 return board
 
 
-if __name__ == '__main__':
-    checkmateObj = checkmate_gen()
-    fen = str(checkmateObj.fen())
-    checkmateUTF = str(checkmateObj).translate(None, ''.join(' ')).encode('utf-8', 'strict')
-    checkmateUTF = checkmateUTF.replace(u'K', u'\u2654')
-    checkmateUTF = checkmateUTF.replace(u'Q', u'\u2655')
-    checkmateUTF = checkmateUTF.replace(u'R', u'\u2656')
-    checkmateUTF = checkmateUTF.replace(u'B', u'\u2657')
-    checkmateUTF = checkmateUTF.replace(u'N', u'\u2658')
-    checkmateUTF = checkmateUTF.replace(u'P', u'\u2659')
-    checkmateUTF = checkmateUTF.replace(u'k', u'\u265A')
-    checkmateUTF = checkmateUTF.replace(u'q', u'\u265B')
-    checkmateUTF = checkmateUTF.replace(u'r', u'\u265C')
-    checkmateUTF = checkmateUTF.replace(u'b', u'\u265D')
-    checkmateUTF = checkmateUTF.replace(u'n', u'\u265E')
-    checkmateUTF = checkmateUTF.replace(u'p', u'\u265F')
-    for x, y in enumerate(checkmateUTF):
-        if checkmateUTF[x] == '.':
-            if x % 2 == 0:
-                checkmateUTF = checkmateUTF[:x]+u'\u2003'+checkmateUTF[x+1:]
-            else:
-                checkmateUTF = checkmateUTF[:x]+u'\u274E'+checkmateUTF[x+1:]
-    print checkmateUTF+'\n'+fen[:fen.find(' ')]
-    api.update_status(checkmateUTF+'\n'+fen[:fen.find(' ')])
+def add_to_history(board):
+    """
+    Returns False if board has already been posted
+    Otherwise adds to history and returns True
+    """
+    try:
+        with open('previous_boards.p', 'rb') as record:
+            board_history = pickle.load(record)
+    except IOError:  # file does not exist, create new list
+        board_history = []
 
-    # unicode_checkmate = string.maketrans(
-    #      u"KQRBNPkqrbnp"
-    # translated = string.translate(checkmateUTF, unicode_checkmate)
-    # print(translated)
+    if board not in board_history:
+        board_history.append(board)
+        with open('previous_boards.p', 'wb') as record:
+            pickle.dump(board_history, record)
+
+        return True
+    else:
+        return False
+
+
+def convert_board_to_utf(board):
+    WHITE_TILE = u'\u2003'
+    BLACK_TILE = u'\u274E'
+    unicode_chess_translate_table = str.maketrans(
+            u"KQRBNPkqrbnp",
+            u"\u2654\u2655\u2656\u2657\u2658\u2659\u265A\u265B\u265C\u265D\u265E\u265F",
+            )
+
+    checkmate_utf_list = list(str(board).translate(unicode_chess_translate_table))
+
+    for x, y in enumerate(checkmate_utf_list):
+        if checkmate_utf_list[x] == '.':
+            if x % 2 == 0:
+                checkmate_utf_list[x] = WHITE_TILE
+            else:
+                checkmate_utf_list[x] = BLACK_TILE
+
+    return "".join(checkmate_utf_list)
+
+
+if __name__ == '__main__':
+    auth = tweepy.OAuthHandler(cKey, cKeySecret)
+    auth.set_access_token(aToken, aTokenSecret)
+    api = tweepy.API(auth)
+
+    checkmateObj = checkmate_gen()
+    fen = checkmateObj.fen().split()[0]
+    tweet_body = "{board}\n{fen}".format(board=convert_board_to_utf(checkmateObj),
+                                         fen=fen)
+    api.update_status(tweet_body)
