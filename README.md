@@ -1,6 +1,6 @@
-# andmatebot-test
+# Thats Mate
 
-Find the bot at @thatmate ( https://twitter.com/thatsmate )
+Find the bot at @thatsmate ( https://twitter.com/thatsmate )
 
 Plays a game until checkmate achieved. Tweets unicode art of the board=
 
