@@ -1,7 +1,9 @@
 # andmatebot-test
 
 Find the bot at @thatmate ( https://twitter.com/thatsmate )
-Plays a game until checkmate achieved. Tweets ascii art of the board and the FEN
+
+Plays a game until checkmate achieved. Tweets unicode art of the board=
+
 
 update 1
 
