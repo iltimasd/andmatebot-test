@@ -98,7 +98,7 @@ def convert_board_to_utf(board):
             checkmate_utf_list_with_tiles.append(_get_tile_for_count(count))
 
         else:
-            checkmate_utf_list_with_tiles.append(" {}\u2005".format(character))
+            checkmate_utf_list_with_tiles.append(" {}\u200A".format(character))
 
         end_of_line = ((count + 1) % 8) == 0
         if end_of_line:
