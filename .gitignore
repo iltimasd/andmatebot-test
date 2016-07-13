@@ -1,3 +1,4 @@
 local_settings.py
 previous_boards.p
 chessvenv
+metrics.log
