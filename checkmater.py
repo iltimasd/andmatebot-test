@@ -61,8 +61,11 @@ def add_to_history(board):
 
 
 def convert_board_to_utf(board):
-    WHITE_TILE = u'+'
-    BLACK_TILE = u'_'
+    """
+    Converts chess Board class print output into actual unicode chess pieces and emoji black/white tiles
+    """
+    WHITE_TILE = u'\u2b1c'
+    BLACK_TILE = u'\u2b1b'
     unicode_chess_translate_table = str.maketrans(
             u"KQRBNPkqrbnp",
             u"\u2654\u2655\u2656\u2657\u2658\u2659\u265A\u265B\u265C\u265D\u265E\u265F",
@@ -70,7 +73,10 @@ def convert_board_to_utf(board):
 
     checkmate_utf_list = str(board).translate(unicode_chess_translate_table).split()
 
-    checkmate_utf_list_with_tiles = []
+    if checkmate_utf_list[0] == ".":
+        checkmate_utf_list_with_tiles = ['\u2005']
+    else:
+        checkmate_utf_list_with_tiles = []
 
     def _get_tile_for_count(count):
         """
@@ -92,7 +98,7 @@ def convert_board_to_utf(board):
             checkmate_utf_list_with_tiles.append(_get_tile_for_count(count))
 
         else:
-            checkmate_utf_list_with_tiles.append(character)
+            checkmate_utf_list_with_tiles.append(" {}\u2005".format(character))
 
         end_of_line = ((count + 1) % 8) == 0
         if end_of_line:
@@ -111,7 +117,4 @@ if __name__ == '__main__':
     api = tweepy.API(auth)
 
     checkmateObj = checkmate_gen()
-    fen = checkmateObj.fen().split()[0]
-    tweet_body = "{}\n{}".format(convert_board_to_utf(checkmateObj), fen)
-    print(tweet_body)
-    #api.update_status(tweet_body)
+    api.update_status(convert_board_to_utf(checkmateObj))
