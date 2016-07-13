@@ -111,6 +111,7 @@ if __name__ == '__main__':
     api = tweepy.API(auth)
 
     checkmateObj = checkmate_gen()
-    tweet_body = convert_board_to_utf(checkmateObj)
+    fen = checkmateObj.fen().split()[0]
+    tweet_body = "{}\n{}".format(convert_board_to_utf(checkmateObj), fen)
     print(tweet_body)
     #api.update_status(tweet_body)
